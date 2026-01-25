@@ -24,6 +24,16 @@ import os
 import sys
 import time
 
+# Get the directory where this script is located
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Camera type/resolution subfolder (e.g., "new_camera", "imx477_1920x1080")
+# Can be set via environment variable CAMERA_TYPE_RESOLUTION
+CAMERA_TYPE_RESOLUTION = os.environ.get('CAMERA_TYPE_RESOLUTION', 'new_camera')
+
+# Directory to save captured images
+IMAGES_DIR = os.path.join(SCRIPT_DIR, 'images', CAMERA_TYPE_RESOLUTION)
+
 
 # Default dewarp configuration for a typical wide-angle lens
 # These values will need calibration for your specific lenses
@@ -380,11 +390,12 @@ def main():
     print(f"\nCamera opened successfully!")
     print(f"Resolution: {args.width}x{args.height} @ {args.framerate}fps")
     print(f"Dewarp: {'ENABLED' if dewarp_enabled else 'DISABLED'}")
+    print(f"Images will be saved to: {IMAGES_DIR}")
     print(f"\nControls:")
     print("  q - Quit")
     print("  d - Toggle dewarp on/off")
     print("  g - Toggle grid overlay")
-    print("  s - Save frame as PNG")
+    print("  s - Save frame as PNG to images folder")
     print("  TAB - Select next parameter (k1/k2/k3/k4/fx/fy/cx/cy)")
     print("  UP/DOWN or +/- - Adjust selected parameter")
     print("  ENTER - Apply changes (restarts camera)")
@@ -478,9 +489,11 @@ def main():
             print(f"Grid: {'ON' if show_grid else 'OFF'}")
 
         elif key == ord('s'):
-            # Save frame
+            # Save frame to images/<CAMERA_TYPE_RESOLUTION>/
+            if not os.path.exists(IMAGES_DIR):
+                os.makedirs(IMAGES_DIR)
             timestamp = time.strftime("%Y%m%d_%H%M%S")
-            filename = f"dewarp_test_{timestamp}.png"
+            filename = os.path.join(IMAGES_DIR, f"dewarp_test_{timestamp}.png")
             cv2.imwrite(filename, frame)
             print(f"Saved: {filename}")
 
@@ -539,6 +552,7 @@ def main():
     cv2.destroyAllWindows()
     print("\nTest complete.")
     print(f"Dewarp config saved at: {config_path}")
+    print(f"Images saved to: {IMAGES_DIR}")
 
 
 if __name__ == "__main__":

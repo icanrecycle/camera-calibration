@@ -31,13 +31,28 @@ pip install -r requirements.txt
 
 You need multiple images of a chessboard pattern from different angles and positions. The script `capture_calibration_images.py` helps you capture these images:
 
+#### USB Cameras
+
 ```bash
 python capture_calibration_images.py
 ```
-
 Controls:
 - Press `c` to capture an image
 - Press `q` or Escape to quit
+
+The images will be saved in the `calibration_images` directory. Move them to `images/<CAMERA_TYPE_RESOLUTION>/` for calibration.
+
+#### CSI Cameras
+
+```bash
+python test_dewarp.py --sensor-id 0 --width 1920 --height 1080 --framerate 60 --flip-method 2 # Camera 0
+python test_dewarp.py --sensor-id 1 --width 4032 --height 3040 --framerate 21 --flip-method 2 # Camera 1
+```
+Controls:
+- Press `s` to save frame as PNG
+- Press `q` to toggle dewarp on/off
+- Press `g` to toggle grid overlay
+- Press `q` to quit
 
 The images will be saved in the `calibration_images` directory. Move them to `images/<CAMERA_TYPE_RESOLUTION>/` for calibration.
 
@@ -66,6 +81,8 @@ All paths are relative to the script's location. The calibration results will be
 
 Apply the calibration to a live video feed:
 
+#### USB Cameras
+
 ```bash
 python live_undistortion.py
 ```
@@ -73,6 +90,24 @@ python live_undistortion.py
 Controls:
 - Press `d` to toggle between distorted and undistorted view
 - Press `q` to quit
+
+#### CSI Cameras
+
+```bash
+python test_dewarp.py --sensor-id 0 --width 1920 --height 1080 --framerate 60 --flip-method 2 # Camera 0
+python test_dewarp.py --sensor-id 1 --width 4032 --height 3040 --framerate 21 --flip-method 2 # Camera 1
+```
+
+Controls:
+- Press `q` to toggle dewarp on/off
+- Press `g` to toggle grid overlay
+- Press `q` to quit
+- Press `TAB` to select next parameter (k1/k2/k3/k4/fx/fy/cx/cy)
+- Press `UP/DOWN` or `+/-` to adjust selected parameter
+- Press `ENTER` to apply changes (restarts camera)
+
+If configuration file "dewarp_sensor<sensor-id>.txt" does not exist, it is created with default parmeters.  
+Copy config for specific camera from `calibration_images/output/<CAMERA_TYPE_RESOLUTION>/code/nvdewarper_config.txt`.
 
 ## Configuration
 
