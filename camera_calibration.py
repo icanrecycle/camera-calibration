@@ -3,6 +3,9 @@ import cv2
 import glob
 import os
 import pickle
+import threading
+
+CORNER_DETECTION_TIMEOUT = 30  # seconds per image
 
 # Get the directory where this script is located
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -16,7 +19,7 @@ CAMERA_TYPE_RESOLUTION = os.environ.get('CAMERA_TYPE_RESOLUTION', 'new_camera')
 # https://calib.io/pages/camera-calibration-pattern-generator
 CHESSBOARD_SIZE = (6, 8)  # Number of inner corners per chessboard row and column
 SQUARE_SIZE = 1.7         # Size of a square in centimeters
-CALIBRATION_IMAGES_PATH = os.path.join(SCRIPT_DIR, f'images/{CAMERA_TYPE_RESOLUTION}/*.png')  # Path to calibration images
+CALIBRATION_IMAGES_DIR = os.path.join(SCRIPT_DIR, f'images/{CAMERA_TYPE_RESOLUTION}')  # Path to calibration images
 OUTPUT_DIRECTORY = os.path.join(SCRIPT_DIR, f'output/{CAMERA_TYPE_RESOLUTION}')  # Directory to save calibration results
 SAVE_UNDISTORTED = True   # Whether to save undistorted images
 
@@ -49,11 +52,13 @@ def calibrate_camera():
     objpoints = []  # 3D points in real world space
     imgpoints = []  # 2D points in image plane
     
-    # Get list of calibration images
-    images = glob.glob(CALIBRATION_IMAGES_PATH)
+    # Get list of calibration images (png + jpg)
+    images = glob.glob(os.path.join(CALIBRATION_IMAGES_DIR, '*.png')) + \
+             glob.glob(os.path.join(CALIBRATION_IMAGES_DIR, '*.jpg')) + \
+             glob.glob(os.path.join(CALIBRATION_IMAGES_DIR, '*.jpeg'))
     
     if not images:
-        print(f"No calibration images found at {CALIBRATION_IMAGES_PATH}")
+        print(f"No calibration images found in {CALIBRATION_IMAGES_DIR}")
         return None, None, None, None, None
     
     # Create output directory if it doesn't exist
@@ -64,12 +69,22 @@ def calibrate_camera():
     
     # Process each calibration image
     for idx, fname in enumerate(images):
+        print(f"Processing image {idx+1}/{len(images)}: {fname}...", end=' ', flush=True)
         img = cv2.imread(fname)
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        
-         # Find the chessboard corners
-        ret, corners = cv2.findChessboardCorners(gray, CHESSBOARD_SIZE, None)
-        
+
+         # Find the chessboard corners (run in daemon thread so it can be skipped/interrupted)
+        result = [None]
+        def detect_corners():
+            result[0] = cv2.findChessboardCorners(gray, CHESSBOARD_SIZE, None)
+        t = threading.Thread(target=detect_corners, daemon=True)
+        t.start()
+        t.join(timeout=CORNER_DETECTION_TIMEOUT)
+        if t.is_alive():
+            print(f"TIMEOUT after {CORNER_DETECTION_TIMEOUT}s - skipped")
+            continue
+        ret, corners = result[0]
+
         # If found, add object points and image points
         if ret:
             objpoints.append(objp)
@@ -86,9 +101,9 @@ def calibrate_camera():
             output_img_path = os.path.join(OUTPUT_DIRECTORY, f'corners_{os.path.basename(fname)}')
             cv2.imwrite(output_img_path, img)
             
-            print(f"Processed image {idx+1}/{len(images)}: {fname} - Chessboard found")
+            print("Chessboard found")
         else:
-            print(f"Processed image {idx+1}/{len(images)}: {fname} - Chessboard NOT found")
+            print("Chessboard NOT found")
     
     if not objpoints:
         print("No chessboard patterns were detected in any images.")
@@ -206,10 +221,12 @@ def undistort_images(mtx, dist):
     if not SAVE_UNDISTORTED:
         return
 
-    images = glob.glob(CALIBRATION_IMAGES_PATH)
+    images = glob.glob(os.path.join(CALIBRATION_IMAGES_DIR, '*.png')) + \
+             glob.glob(os.path.join(CALIBRATION_IMAGES_DIR, '*.jpg')) + \
+             glob.glob(os.path.join(CALIBRATION_IMAGES_DIR, '*.jpeg'))
 
     if not images:
-        print(f"No images found at {CALIBRATION_IMAGES_PATH}")
+        print(f"No images found in {CALIBRATION_IMAGES_DIR}")
         return
 
     undistorted_dir = os.path.join(OUTPUT_DIRECTORY, 'undistorted')

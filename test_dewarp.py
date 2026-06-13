@@ -493,8 +493,8 @@ def main():
             if not os.path.exists(IMAGES_DIR):
                 os.makedirs(IMAGES_DIR)
             timestamp = time.strftime("%Y%m%d_%H%M%S")
-            filename = os.path.join(IMAGES_DIR, f"dewarp_test_{timestamp}.png")
-            cv2.imwrite(filename, frame)
+            filename = os.path.join(IMAGES_DIR, f"dewarp_test_{timestamp}.jpg")
+            cv2.imwrite(filename, frame, [cv2.IMWRITE_JPEG_QUALITY, 95])
             print(f"Saved: {filename}")
 
         elif key == 9:  # TAB

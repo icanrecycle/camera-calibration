@@ -1,0 +1,25 @@
+# IMX477_AC6MM
+# nvdewarper config for lens distortion correction
+# Calibrate your camera with OpenCV to get accurate parameters
+
+[property]
+output-width=4032
+output-height=3040
+num-batch-buffers=1
+
+[surface0]
+projection-type=1
+surface-index=0
+width=4032
+height=3040
+
+# Camera intrinsic parameters from calibration
+# focal-length: fx;fy from camera matrix
+focal-length=3225.600000;2432.000000
+
+# distortion: k1;k2;k3;k4 fisheye distortion coefficients
+distortion=0.000000;0.000000;0.000000;0.000000
+
+# Optical center (principal point) from camera matrix
+src-x0=2016.000000
+src-y0=1520.000000

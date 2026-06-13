@@ -50,7 +50,7 @@ python test_dewarp.py --sensor-id 1 --width 4032 --height 3040 --framerate 21 --
 ```
 Controls:
 - Press `s` to save frame as PNG
-- Press `q` to toggle dewarp on/off
+- Press `d` to toggle dewarp on/off
 - Press `g` to toggle grid overlay
 - Press `q` to quit
 

@@ -20,8 +20,8 @@ ENV/
 *.swo
 
 # Calibration images and output
-calibration_images/
-output/
+#calibration_images/
+#output/
 
 # Jupyter Notebook
 .ipynb_checkpoints
